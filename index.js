@@ -18,15 +18,17 @@ const client = new MongoClient(uri, {
   },
 });
 
-// Create collections for later use
-let roomsCollection, bookingsCollection;
+
+let roomsCollection, bookingsCollection, reviewsCollection;
 
 async function run() {
   try {
     await client.connect();
-    const database = client.db('hotelRooms'); // Replace with your database name
+    const database = client.db('hotelRooms'); 
     roomsCollection = database.collection('rooms');
     bookingsCollection = database.collection('myBookings');
+    reviewsCollection = database.collection('reviews');
+
 
     console.log("Connected to MongoDB!");
   } catch (error) {
@@ -36,7 +38,7 @@ async function run() {
 
 run();
 
-// Get all rooms
+
 app.get('/rooms', async (req, res) => {
   try {
     const cursor = roomsCollection.find();
@@ -48,7 +50,18 @@ app.get('/rooms', async (req, res) => {
   }
 });
 
-// Get a specific room by ID
+app.get('/reviews', async (req, res) => {
+  try {
+    const cursor = reviewsCollection.find();
+    const result = await cursor.toArray();
+    res.send(result);
+  } catch (error) {
+    console.error("Error fetching rooms:", error);
+    res.status(500).json({ message: "Failed to fetch rooms" });
+  }
+});
+
+
 app.get('/rooms/:id', async (req, res) => {
   try {
     const id = req.params.id;
@@ -61,10 +74,10 @@ app.get('/rooms/:id', async (req, res) => {
   }
 });
 
-// Post a new booking
+
 app.post("/myBookings", async (req, res) => {
   try {
-    const room = req.body; // Data from the frontend
+    const room = req.body; 
     const result = await bookingsCollection.insertOne(room);
 
     if (result.acknowledged) {
@@ -78,10 +91,10 @@ app.post("/myBookings", async (req, res) => {
   }
 });
 
-// Get all bookings for a specific user by email
+
 app.get('/myBookings', async (req, res) => {
   try {
-    const { email } = req.query; // Extract email from query parameters
+    const { email } = req.query; 
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
     }
@@ -94,14 +107,14 @@ app.get('/myBookings', async (req, res) => {
   }
 });
 
-// Modify booking date (PUT method)
+
 app.put('/myBookings/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { bookingDate } = req.body; // New date to update
+    const { bookingDate } = req.body; 
     const query = { _id: new ObjectId(id) };
 
-    // Update the booking date
+ 
     const updateDoc = {
       $set: { bookingDate: new Date(bookingDate) },
     };
@@ -119,7 +132,7 @@ app.put('/myBookings/:id', async (req, res) => {
   }
 });
 
-// Delete a booking (DELETE method)
+
 app.delete('/myBookings/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -138,7 +151,28 @@ app.delete('/myBookings/:id', async (req, res) => {
   }
 });
 
-// Default route
+
+// reviews 
+app.post("/reviews", async (req, res) => {
+  try {
+    const reviews = req.body; 
+    const result = await reviewsCollection.insertOne(reviews);
+
+    if (result.acknowledged) {
+      res.status(201).json({ message: "Review added to collection successfully!" });
+    } else {
+      res.status(500).json({ message: "Failed to add review to collection." });
+    }
+  } catch (error) {
+    console.error("Error adding review to collection:", error);
+    res.status(500).json({ message: "An error occurred." });
+  }
+});
+
+
+
+
+
 app.get('/', (req, res) => {
   res.send('Modern Hotel Booking Platform');
 });
